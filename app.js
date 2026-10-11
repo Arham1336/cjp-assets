@@ -346,7 +346,7 @@ function shareReferral() {
 }
 function openReferral() { const link = referralLink(); if (tg?.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank'); }
 
-const CJP_HISTORY_LABELS = { daily_checkin: 'Daily Check-in', mining: 'Daily Mining', spin_reward: 'Spin Reward', referral_task: 'Referral Task', leaderboard_reward: 'Leaderboard Reward', ad_reward: 'Ad Reward (legacy)', task_join_channel: 'Task: Join Channel', task_join_chat: 'Task: Join Chat', signup_bonus: 'Signup Bonus', referral_commission: 'Referral Commission', referral_signup_bonus: 'Referral Bonus', earning: 'Earning' };
+const CJP_HISTORY_LABELS = { daily_checkin: 'Daily Check-in', mining: 'Mining', spin_reward: 'Spin Reward', referral_task: 'Referral Task', leaderboard_reward: 'Leaderboard Reward', ad_reward: 'Ad Reward (legacy)', task_join_channel: 'Task: Join Channel', task_join_chat: 'Task: Join Chat', signup_bonus: 'Signup Bonus', referral_commission: 'Referral Commission', referral_signup_bonus: 'Referral Bonus', earning: 'Earning' };
 function historyDate(iso) { return iso ? new Date(iso).toLocaleString() : ''; }
 function openHistory(tabName) {
   $('modalTitle').textContent = 'History';
@@ -370,7 +370,7 @@ async function loadHistoryTab(tabName) {
       list.innerHTML = rows.length ? rows.map(c => `<div class="hist-row"><div><b style="color:#48c774">+${money(c.amount)} USDT</b> • ${esc(L[c.type] || 'Bonus')}</div><div class="muted">${historyDate(c.createdAt)}</div></div>`).join('') : '<div class="empty">No USDT bonuses yet.</div>';
     } else {
       const rows = await api('/api/my-cjp-history');
-      list.innerHTML = rows.length ? rows.map(c => `<div class="hist-row"><div><b>+${money(c.amount)} CJP</b> • ${esc(CJP_HISTORY_LABELS[c.meta?.reason || c.type] || 'Earning')}</div><div class="muted">${historyDate(c.createdAt)}</div></div>`).join('') : '<div class="empty">No CJP earnings yet.</div>';
+      list.innerHTML = rows.length ? rows.map(c => `<div class="hist-row"><div><b>+${money(c.amount)} points</b> • ${esc(CJP_HISTORY_LABELS[c.type !== 'credit' ? c.type : (c.meta?.reason || c.type)] || 'Earning')}</div><div class="muted">${historyDate(c.createdAt)}</div></div>`).join('') : '<div class="empty">No CJP earnings yet.</div>';
     }
   } catch (e) { list.innerHTML = `<div class="empty">${esc(e.message || 'Unable to load history.')}</div>`; }
 }

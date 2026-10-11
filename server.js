@@ -227,10 +227,10 @@ function freeSpinsPerDay(u) { const l = currentVipLevel(u); return l > 0 ? VIP_P
 function freeSpinsLeft(u) { return Math.max(0, freeSpinsPerDay(u) - spinsUsedToday(u)); }
 function vipDailyUsdtFor(u) { const l = currentVipLevel(u); return l > 0 ? floor6(VIP_PLANS[l].price * VIP_DAILY_USDT_MONTHLY_PERCENT / 100 / VIP_DAILY_USDT_DAYS) : 0; }
 async function vipReferralCount(c, userId) {
-  return Number((await rowOf(c, "SELECT COUNT(*) AS n FROM users WHERE referred_by = $1 AND vip_level > 0", [userId])).n);
+  return Number((await rowOf(c, "SELECT COUNT(*) AS n FROM users WHERE referred_by = $1 AND vip_level > 0 AND is_blocked = FALSE", [userId])).n);
 }
 async function nonVipReferralCount(c, userId) {
-  return Number((await rowOf(c, "SELECT COUNT(*) AS n FROM users WHERE referred_by = $1 AND vip_level = 0", [userId])).n);
+  return Number((await rowOf(c, "SELECT COUNT(*) AS n FROM users WHERE referred_by = $1 AND vip_level = 0 AND is_blocked = FALSE", [userId])).n);
 }
 // Points credit for a member that is not loaded in memory (leaderboard prizes): atomic SQL increment, no referral commission.
 async function creditCjpById(c, userId, amount, source) {

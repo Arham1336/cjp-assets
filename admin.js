@@ -29,8 +29,9 @@ async function loadStats() {
 }
 function setBadge(id, n) { const b = $(id); if (!b) return; if (n) { b.textContent = n; b.classList.remove('hidden'); } else b.classList.add('hidden'); }
 
+let usdtWdCount = 0, coinWdCount = 0;
 async function loadWithdrawals() {
-  const rows = await api('/api/admin/withdrawals'); setBadge('wdBadge', rows.length);
+  const rows = await api('/api/admin/withdrawals'); usdtWdCount = rows.length; setBadge('wdBadge', usdtWdCount + coinWdCount);
   $('withdrawals').innerHTML = rows.length ? rows.map(w => {
     const feePercent = w.feePercent ?? 5, feeAmount = w.feeAmount != null ? money(w.feeAmount) : money(w.amount) * (feePercent / 100), netAmount = w.netAmount != null ? money(w.netAmount) : money(w.amount) - feeAmount;
     return `<div class="item"><div class="item-top"><div><div class="item-title">${money(w.amount)} USDT requested • ${esc(w.network)}</div><div class="muted">${who(w)} • ${date(w.createdAt)}</div></div><b>PROCESSING</b></div><div class="muted">Address: ${esc(w.address)} ${copyBtn(w.address)}</div><div class="muted">Fee (${esc(feePercent)}%): ${money(feeAmount)} USDT • <b style="color:#ffbd3e">Send exactly: ${money(netAmount)} USDT</b></div><div class="actions"><button class="primary" data-act="completeWithdrawal" data-id="${esc(w.id)}">Mark Completed</button><button class="danger" data-act="rejectWithdrawal" data-id="${esc(w.id)}">Reject &amp; Refund</button></div></div>`;
@@ -48,7 +49,7 @@ async function rejectWithdrawal(d) {
 }
 
 async function loadCoinWithdrawals() {
-  const rows = await api('/api/admin/coin-withdrawals');
+  const rows = await api('/api/admin/coin-withdrawals'); coinWdCount = rows.length; setBadge('wdBadge', usdtWdCount + coinWdCount);
   $('coinWithdrawals').innerHTML = rows.length ? rows.map(w => `<div class="item"><div class="item-top"><div><div class="item-title">${money(w.amount)} CJP coin to a TON wallet</div><div class="muted">${who(w)} \u2022 ${date(w.createdAt)}</div></div><b>PROCESSING</b></div><div class="muted">Address: ${esc(w.address)} ${copyBtn(w.address)}</div><div class="actions"><button class="primary" data-act="completeCoinWithdrawal" data-id="${esc(w.id)}">Mark Sent</button><button class="danger" data-act="rejectCoinWithdrawal" data-id="${esc(w.id)}">Reject &amp; Refund</button></div></div>`).join('') : '<div class="empty">No coin withdrawals waiting.</div>';
 }
 async function completeCoinWithdrawal(d) {
