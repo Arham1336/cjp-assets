@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#090909"><title>CJP Earning Bot</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/style.css">
+<style>
+.hist-tabs{display:flex;gap:8px;margin-bottom:12px}
+.hist-tabs .hist-tab{flex:1;padding:8px 6px;border-radius:10px;border:1px solid rgba(255,189,62,.3);background:transparent;color:#ddd;font-size:.85rem}
+.hist-tabs .hist-tab.active{background:#ffbd3e;color:#111;font-weight:700;border-color:#ffbd3e}
+.hist-list{max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.hist-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;font-size:.85rem}
+.hist-row .muted{font-size:.75rem;color:#999}
+.hist-status{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap}
+.hist-pending,.hist-processing{background:rgba(255,189,62,.18);color:#ffbd3e}
+.hist-verified,.hist-completed{background:rgba(72,199,116,.18);color:#48c774}
+.hist-rejected{background:rgba(255,92,92,.18);color:#ff5c5c}
+.network-pills{display:flex;gap:8px}
+.network-pills .pill{flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(255,189,62,.3);background:transparent;color:#ddd;font-size:.85rem;font-weight:600}
+.network-pills .pill.active{background:#ffbd3e;color:#111;border-color:#ffbd3e}
+.hidden-select{display:none}
+.wallet-status{margin:10px 0;padding:10px 14px;border-radius:10px;font-weight:700;font-size:.85rem;text-align:center}
+.wallet-status.processing{background:rgba(72,199,116,.15);color:#48c774;border:1px solid rgba(72,199,116,.35)}
+.icon-label-btn{display:flex!important;flex-direction:column!important;align-items:center!important;gap:1px!important;background:transparent!important;border:none!important;color:#ddd!important;font-size:.55rem!important;padding:4px 6px!important;line-height:1.2!important}
+.icon-label-btn .icon-emoji{font-size:1.1rem!important;line-height:1!important}
+.icon-label-btn .icon-label{font-size:.55rem!important;line-height:1!important}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand"><div class="logo">CJP</div><div><div class="brand-title">CJP<span>EarningBot</span></div><div class="brand-sub">Official Telegram Mini App</div></div></div>
+    <div id="vipBadge" class="vip-badge">NON-VIP</div>
+  </header>
+
+  <div class="notice">🎉 Welcome to CJP Earning Bot <span>›</span></div>
+
+  <section class="profile-row">
+    <div class="avatar">C</div>
+    <div class="profile-copy"><b id="profileName">CJP Member</b><span id="profileVip">NON-VIP</span></div>
+    <div class="profile-actions"><button id="historyBtn" class="icon-label-btn"><span class="icon-emoji">🕘</span><span class="icon-label">History</span></button></div>
+  </section>
+
+  <section id="tab-dashboard" class="tab-panel active">
+    <section class="balance-grid">
+      <div class="balance-card cjp-card"><div class="balance-label">CJP POINTS</div><div id="cjpBalance" class="balance-value">0</div><div class="balance-note">1,000 points = 1 CJP coin</div></div>
+      <div class="balance-card usdt-card"><div class="balance-label">USDT BALANCE</div><div id="usdtBalance" class="balance-value">0</div><div class="balance-note">Available USDT</div></div>
+    </section>
+
+    <section class="quick-grid">
+      <button id="gameBtn" class="quick-card"><span class="qicon purple">🎮</span><b>Game</b><small>Spin &amp; Win</small></button>
+      <button id="dailyBtn" class="quick-card"><span class="qicon blue">✓</span><b>Daily Check-in</b><small>+10 points</small></button>
+      <button id="taskBtn" class="quick-card"><span class="qicon cyan">✈</span><b>Join Channel</b><small>+100 points</small></button>
+      <button class="quick-card" onclick="showTab('referral')"><span class="qicon green">👥</span><b>Referral</b><small>Earn More</small></button>
+    </section>
+
+    <section class="card mining-card">
+      <div class="mining-top"><div id="minerIcon" class="miner">⛏</div><div class="mining-copy"><b>Mining</b><p id="miningDesc">Claim your points every 8 hours.</p></div><div id="miningReward" class="mining-reward">+0</div></div>
+      <div class="mining-bar"><div id="miningBarFill" class="mining-fill"></div></div>
+      <button id="mineBtn" class="wide">Claim Mining</button>
+      <div id="miningTimer" class="muted center"></div>
+    </section>
+
+    <section class="card stats-card"><div class="mini-stat"><b id="refCount">0</b><span>Referrals</span></div><div class="mini-stat"><b id="spinsLeft">0</b><span>Spins Left</span></div><div class="mini-stat"><b>∞</b><span>Permanent VIP</span></div></section>
+  </section>
+
+  <section id="tab-wallet" class="tab-panel">
+    <section class="card wallet-main"><div class="section-head"><div><h2>Wallet</h2><p>Your points, CJP coin & USDT balances</p></div><span class="wallet-icon">💳</span></div><div class="wallet-values"><div><span>Points</span><b id="walletCjp">0</b></div><div><span>USDT</span><b id="walletUsdt">0</b></div></div><div id="walletWithdrawStatus" class="wallet-status hidden"></div><div class="actions"><button id="walletWithdrawBtn" class="secondary">Withdraw USDT</button></div></section>
+    <section class="card coin-card"><div class="section-head"><div><h2>🪙 CJP Coin</h2><p id="coinNote"></p></div></div><div class="wallet-values coin-values"><div><span>Coins</span><b id="coinBalance">0</b></div><div><span>Claimable</span><b id="coinClaimable">0</b></div><div><span>Points locked</span><b id="coinLocked">0</b></div></div><div class="actions"><button id="coinExchangeBtn">Exchange points</button><button id="coinClaimBtn" class="secondary">Claim</button></div><button id="coinWithdrawBtn" class="wide secondary" style="margin-top:10px">Withdraw CJP coin</button><div id="coinWithdrawNote" class="muted center" style="margin-top:8px"></div><div id="coinList" class="hist-list" style="margin-top:12px"></div></section>
+    <section class="card"><div class="section-head"><div><h2>Deposit USDT</h2><p>Select a network. The receiving address and QR code change with the selected network.</p></div></div><div class="deposit-form"><label>Network</label><div id="depNetworkPills" class="network-pills"><button type="button" class="pill active" data-net="TON">TON</button><button type="button" class="pill" data-net="TRC20">TRC20</button><button type="button" class="pill" data-net="BEP20">BEP20</button></div><select id="depNetwork" class="hidden-select"><option value="TON">TON</option><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option></select></div><div id="selectedDeposit" class="selected-deposit"><div class="loading">Loading wallet address…</div></div><div class="deposit-form"><label>Amount (USDT)</label><input id="depAmount" type="number" min="0.01" step="0.01" placeholder="10"><label>Transaction hash</label><input id="txHash" placeholder="Paste transaction hash"><button id="depositBtn" class="wide">Submit Deposit for Verification</button><div id="depositMsg" class="message"></div></div></section>
+    <section class="card"><h2>Withdraw USDT</h2><p class="muted">Minimum 0.1 USDT • VIP only • one request every 24 hours • Completed within 24 hours.</p><button id="walletWithdrawBtn2" class="wide">Open Withdrawal</button><a id="proofOfPayoutsLink" href="#" class="muted" style="display:block;margin-top:12px;text-align:center;text-decoration:underline;color:#ffbd3e">📋 View Proof of Payouts</a></section>
+  </section>
+
+  <section id="tab-tasks" class="tab-panel"><section class="card"><div class="section-head"><div><h2>Tasks</h2><p>Complete tasks and earn points & USDT.</p></div></div><div class="task"><div><b>Join CJPEarningOfficial</b><p>Join our official Telegram channel</p></div><button id="taskBtn2">+100 points</button></div><div class="task"><div><b>Join CJPEarningOfficial Chat</b><p>Join our official Telegram chat</p></div><button id="taskChatBtn">+100 points</button></div><div class="task"><div><b>Daily Check-in</b><p>Claim once per day — streak grows +10 points/day</p></div><button id="taskDailyBtn">+10 points</button></div><div class="task"><div><b>VIP Daily USDT</b><p id="vipDailyDesc">Become VIP to claim USDT every day</p></div><button id="vipDailyBtn">VIP only</button></div><div class="task"><div><b>5 VIP Referrals</b><p id="milestone5Desc">Invite 5 friends who become VIP</p></div><button id="milestone5Btn" data-task="referral_milestone_5">…</button></div><div class="task"><div><b>10 VIP Referrals</b><p id="milestone10Desc">Invite 10 friends who become VIP</p></div><button id="milestone10Btn" data-task="referral_milestone_10">…</button></div><div class="task"><div><b>50 VIP Referrals</b><p id="milestone50Desc">Invite 50 friends who become VIP</p></div><button id="milestone50Btn" data-task="referral_milestone_50">…</button></div><div class="task"><div><b>5 Non-VIP Referrals</b><p id="milestoneNv5Desc">Invite 5 friends</p></div><button id="milestoneNv5Btn" data-task="referral_nonvip_5">…</button></div><div class="task"><div><b>10 Non-VIP Referrals</b><p id="milestoneNv10Desc">Invite 10 friends</p></div><button id="milestoneNv10Btn" data-task="referral_nonvip_10">…</button></div><div class="task"><div><b>50 Non-VIP Referrals</b><p id="milestoneNv50Desc">Invite 50 friends</p></div><button id="milestoneNv50Btn" data-task="referral_nonvip_50">…</button></div></section></section>
+
+  <section id="tab-game" class="tab-panel"><section class="card game-card">
+    <div class="section-head"><div><h2>🎡 Spin &amp; Win</h2><p>1 free spin every day (resets 00:00 UTC). VIP members get more. Need extra? 1 spin = 0.1 USDT, 10 spins = 0.9 USDT.</p></div><button id="gameBack" class="small secondary">← Back</button></div>
+    <div class="wheel-wrap"><div class="wheel-pointer"></div><div id="wheel" class="wheel"></div><svg id="wheelLights" class="wheel-lights" viewBox="-120 -120 240 240" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div id="spinInfo" class="spin-pills"></div>
+    <button id="spinBtn" class="wide spin-btn">SPIN</button>
+    <div class="spin-shop"><button id="buySpin1"><b>Buy 1 spin</b><small>0.1 USDT</small></button><button id="buySpin10"><span class="shop-badge">SAVE 0.1</span><b>Buy 10 spins</b><small>0.9 USDT</small></button></div>
+    <div class="muted center" style="margin-top:12px">Prizes</div>
+    <div id="prizeList" class="prize-list"></div>
+  </section></section>
+
+  <section id="tab-vip" class="tab-panel">
+    <section class="card vip-card"><div class="vip-glow"></div><div class="section-head"><div><div class="gold-title">👑 VIP MEMBERSHIP</div><h2>VIP Level & Upgrade</h2><p>Higher mining, more free spins and a daily USDT claim</p></div><button id="refreshVip" class="gold-btn">Refresh</button></div><div id="vipInfo" class="vip-info"></div><div id="plans" class="plans"></div></section>
+  </section>
+
+  <section id="tab-referral" class="tab-panel"><section class="card referral-card"><div class="section-head"><div><h2>Referral</h2><p>Invite friends and earn commission.</p></div><span class="ref-icon">👥</span></div><div class="ref-stats"><div><b id="refCount2">0</b><span>Referrals</span></div><div><b id="refTotalCjp">0</b><span>Total Points Earned</span></div></div><div class="refbox"><a id="refCode" class="ref-link" href="#" rel="noopener">Loading referral link…</a><button id="copyRef" class="small">Copy</button></div><p class="muted">New members get 200 points signup bonus. You get 100 points for every friend who joins. Commission (in points): 5% when you are VIP, otherwise 2%.</p><div id="refBreakdown" class="muted"></div><button id="shareRef" class="wide">Share Referral Link</button></section>
+    <section id="refLb" class="card lb-card hidden"><div class="section-head"><div><h2>🏆 Monthly Top Referrers</h2><p id="lbSub">Invite the most VIP friends this month and win CJP points.</p></div></div><div id="lbBody"></div></section></section>
+
+  <nav class="bottom-nav"><button class="nav-item active" data-tab="dashboard"><span>⌂</span><small>Dashboard</small></button><button class="nav-item" data-tab="wallet"><span>▣</span><small>Wallet</small></button><button class="nav-item" data-tab="tasks"><span>✓</span><small>Tasks</small></button><button class="nav-item" data-tab="referral"><span>♟</span><small>Referral</small></button><button class="nav-item" data-tab="vip"><span>👑</span><small>VIP</small></button></nav>
+
+  <div id="toast" class="toast hidden"></div>
+  <div id="modal" class="modal hidden"><div class="modal-box"><div class="row"><h2 id="modalTitle">Withdraw</h2><button id="closeModal" class="icon">×</button></div><div id="modalBody"></div></div></div>
+</main>
+<script src="/app.js"></script>
+</body></html>

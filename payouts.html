@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#0a0a0a"><title>CJP Earning Bot — Proof of Payouts</title>
+<style>
+:root{--gold:#ffbd3e;--bg:#0a0a0a;--card:#141414;--line:rgba(255,255,255,.08);--muted:#9a9a9a;--green:#48c774}
+*{box-sizing:border-box}
+body{background:var(--bg);color:#eee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:20px}
+.wrap{max-width:720px;margin:0 auto}
+header{text-align:center;margin-bottom:24px}
+header .brand{font-size:1.6rem;font-weight:800}
+header .brand span{color:var(--gold)}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.list{display:flex;flex-direction:column;gap:10px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.row .left b{display:block;font-size:1rem}
+.row .left span{color:var(--muted);font-size:.78rem}
+.amount{color:var(--gold);font-weight:800;font-size:1.05rem;white-space:nowrap}
+.status{background:rgba(72,199,116,.15);color:var(--green);font-weight:700;font-size:.72rem;padding:3px 10px;border-radius:8px}
+.txlink{font-size:.75rem;color:#7fb3ff;text-decoration:none;word-break:break-all}
+.txlink:hover{text-decoration:underline}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">CJP <span>EARNING BOT</span></div>
+    <p>Proof of Payouts — recent completed withdrawals, verifiable on-chain.</p>
+  </header>
+  <div id="list" class="list"><div class="empty">Loading…</div></div>
+  <footer>Names are partially masked for member privacy. Transaction hashes link to the public blockchain explorer for independent verification.</footer>
+</div>
+<script>
+const EXPLORERS = { TON: 'https://tonscan.org/tx/', TRC20: 'https://tronscan.org/#/transaction/', BEP20: 'https://bscscan.com/tx/' };
+function fmtDate(iso){ if(!iso) return ''; return new Date(iso).toLocaleString(); }
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+const SAFE_TX=/^[A-Za-z0-9_\-=+\/:.]+$/;
+fetch('/api/public/payouts').then(r=>r.json()).then(rows=>{
+  const list=document.getElementById('list');
+  if(!Array.isArray(rows)||!rows.length){ list.innerHTML='<div class="empty">No completed payouts yet.</div>'; return; }
+  list.innerHTML=rows.map(w=>{
+    const explorer=EXPLORERS[w.network], tx=String(w.txHash||'');
+    const txLink=(tx && explorer && SAFE_TX.test(tx)) ? `<a class="txlink" href="${explorer}${encodeURIComponent(tx)}" target="_blank" rel="noopener noreferrer">${esc(tx)}</a>` : (tx?`<span class="txlink">${esc(tx)}</span>`:'');
+    return `<div class="row"><div class="left"><b>${esc(w.name)} • ${esc(w.network)}</b><span>${esc(fmtDate(w.completedAt))}</span>${txLink?`<div>${txLink}</div>`:''}</div><div style="text-align:right"><div class="amount">${esc(w.amount)} USDT</div><div class="status">PAID</div></div></div>`;
+  }).join('');
+}).catch(()=>{ document.getElementById('list').innerHTML='<div class="empty">Unable to load payouts right now.</div>'; });
+</script>
+</body>
+</html>
